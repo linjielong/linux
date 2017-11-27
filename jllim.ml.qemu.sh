@@ -5,7 +5,7 @@
 #   Author:       jielong.lin 
 #   Email:        493164984@qq.com
 #   DateTime:     2017-11-26 00:25:47
-#   ModifiedTime: 2017-11-26 22:49:46
+#   ModifiedTime: 2017-11-27 21:18:23
 
 JLLPATH="$(which $0)"
 JLLPATH="$(dirname ${JLLPATH})"
@@ -51,7 +51,7 @@ FOR 64bit debian:
 
 ${Fred}/opt/FriendlyARM/toolschain/4.4.3/libexec/gcc/arm-none-linux-gnueabi/4.4.3/cc1: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
 Makefile:439: recipe for target 'include/autoconf.mk' failed${AC}
-
+aptitude install lib32stdc++6
 
 
 
