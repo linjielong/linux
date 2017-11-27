@@ -1,0 +1,192 @@
+
+
+
+frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java
+
+  |----mHandlerThread = new ServiceThread("PowerManagerService", Process.THREAD_PRIORITY_DISPLAY, false /*allowIo*/)
+  |         |
+  |         |   #Note: ServiceThread extends HandlerThread  extends Thread 
+  |         |----HandlerThread(String name, int priority)
+  |                   |
+  |                   |   @libcore/libart/src/main/java/java/lang/Thread.java
+  |                   |----Thread(String threadName)
+  |                             |
+  |                             |----Thread::create(null, null, threadName, 0)
+  |                                       |
+  |                                       |----Thread.currentThread( )
+  |                                       |         |
+  |                                       |         |   @art/runtime/native/java_lang_Thread.cc
+  |                                       |         |----Thread_currentThread(...)
+  |                                       |             #Note: Create a new Object associated with the current Thread
+  |
+  |----mHandlerThread.start( )
+  |    (Note: ServiceThread extends HandlerThread extends Thread )
+  |          |
+  |          |   @libcore/libart/src/main/java/java/lang/Thread.java
+  |          |----Thread::start( )
+  |                   |
+  |                   |----nativeCreate(Thread t, long stackSize, boolean daemon)
+  |                             |
+  |                             |   @art/runtime/native/java_lang_Thread.cc 
+  |                             |----Thread_nativeCreate(...)
+  |                                       |
+  |                                       |   @art/runtime/thread.cc
+  |                                       |----Thread::CreateNativeThread(...)
+  |                                                |
+  |                                                |----pthread_create(...Thread::CreateCallback...)
+  |
+  |    Thread::CreateCallback(...)  #¡¾NewThread¡¿                                      
+  |          |----Invoke the 'run' method of our java.lang.Thread.
+  |           <=> ServiceThread::run override HandlerThread::run override java.lang.Thread::run
+  |           <=> ServiceThread::run( )
+  |                   |
+  |                   |----HandlerThread::run( )
+  |                            |
+  |                            |----Looper.prepare( )
+  |                            |        |
+  |                            |        |----Looper.prepare(true)
+  |                            |                  |----tempLooper = new Looper( )
+  |                            |                  |        |----mQueue = new MessageQueue( )
+  |                            |                  |    
+  |                            |                  |   #ThreadLocal<Looper> sThreadLocal           
+  |                            |                  |----sThreadLocal.set(tempLooper)
+  |                            |
+  |                            |----synchronized(this)
+  |                                 |
+  |                                 |----mLooper = Looper.myLooper( )
+  |                                 |    |
+  |                                 |    |   #Return tLooper object.
+  |                                 |    |----sThreadLocal.get( )
+  |                                 |
+  |                                 |   #public final native void notifyAll( );
+  |                                 |   #It will tell someone who call HandlerThread::getLooper( ) about mLooper is initialized successfully
+  |                                 |----notifyAll( )
+  |                            |----|
+  |                            |
+  |                            |----Looper.loop( )
+  |                                 |
+  |                                 |----queue = Looper.myLooper( ).mQueue
+  |                                 |
+  |                                 |----for(;;)  <---------------------------------------------------|
+  |                                       |                                                           |
+  |                                       |----Message msg = queue.next( ); //might block             |
+  |                                       |----msg.target.dispatchMessage(msg);                       |
+  |                                       |                                                           |
+  |                                       |___________________________________________________________|
+  |
+  |----tempLooper = mHandlerThread.getLooper( )
+  |      |
+  |      |----synchronized(this)
+  |           |
+  |           |----while (isAlive( ) && mLooper == null)
+  |                   |
+  |                   |   #public final native void wait(long time, int frac);
+  |                   |   #waiting for initialzing Looper object until the new thread call notifyAll( )
+  |                   |----Object::wait( )
+ .............................|----wait(0, 0)
+  |
+  |   #PowerManagerService extends Handler
+  |----mHandler = new PowerManagerHandler(tempLooper)
+  |      |
+         |   @frameworks/base/core/java/android/os/Handler.java
+         |----new Handler(tempLooper, null, true /*async*/)
+               |----mLooper=tempLooper
+               |----mQueue=tempLooper.mQueue
+               |----mCallback=null
+               |----mAsynchronous=true
+
+@frameworks/base/core/java/android/os/Message.java
+Message msg=Message.obtain(Handler h, Runnable callback)
+   |
+   |----Message m = obtain( )
+   |      |----synchronized(sPoolSync)
+   |           |
+   |           |----IF: sPool != null
+   |           |    |----Message m=sPool
+   |           |    |----sPool = m.next
+   |           |    |----m.next = null
+   |           |    |----m.flags = 0
+   |           |    |----sPoolSize--
+   |           |    |----return m
+   |      |----|
+   |      |
+   |      |----new Message( )     
+   |
+   |----m.target = h
+   |----m.callback = callback
+
+msg.setAsynchronous(true)
+   |
+   |----Message::flags |= FLAG_ASYNCHRONOUS
+
+mHandler.sendMessage(msg)
+   |
+   |----PowerManagerHandler::sendMessage(msg)
+         |
+         |----Handler::sendMessageDelayed(msg, 0)
+                  |
+                  |----sendMessageAtTime(msg, ...)
+                         |
+                         |----MessageQueue queue = mQueue
+                         |
+                         |----enqueueMessage(queue, msg, ...)
+                                  |
+                                  |----IF: mAsynchronous is true
+                                           |
+                                           |----queue.enqueueMessage(msg, ...)
+                                                    |----MessageQueue::enqueueMessage(msg, ...)
+                                                            |----Á´½Ómsgµ½MessageQueue:mMessageµÄÄ©Î².
+                                                            |----IF: needWake
+                                                                  |   #private native static void nativeWake(long ptr);
+                                                                  |----nativeWake(mPtr)
+
+
+|----shutdownOrRebootInternal(final boolean shutdown, final boolean confirm,final String reason, boolean wait)
+|        |
+         |----Runnable runnable = new Runnable( )
+         |        |
+         |        |----run( )
+         |               |
+         |               |----IF   shutdown=true:
+         |               |          |
+         |               |          |----ShutdownThread.shutdown(mContext, confirm)
+         |               |----ELSE shutdown=false:
+         |                          |
+         |                          |----ShutdownThread.reboot(mContext, reason, confirm)
+         |
+         |----Message msg = Message.obtain(mHandler, runnable)
+         |----msg.setAsynchronous(true)
+         |----mHandler.sendMessage(msg)
+         |
+         |----IF wait=true :
+                  |
+                  |----WHILE true:  runnable.wait( )
+
+
+
+
+
+
+
+
+
+
+
+|----systemReady(...)
+         |----SensorManager sensorManager = new SystemSensorManager(mContext, mHandler.getLooper());
+         |----...
+         |----mDisplayManagerInternal.initPowerManagement(mDisplayPowerCallbacks, mHandler, sensorManager);
+         |----...
+
+
+
+|----updateUserActivitySummaryLocked(long now, int dirty)
+         |
+         |----on some case: mHandler.removeMessages (MSG_USER_ACTIVITY_TIMEOUT)
+         |
+         |----on some case: 
+                  Message msg = mHandler.obtainMessage(MSG_USER_ACTIVITY_TIMEOUT);
+                  msg.setAsynchronous(true)
+                  mHandler.sendMessageAtTime(msg, nextTimeout)
+
+

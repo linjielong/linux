@@ -1,0 +1,182 @@
+
+
+
+
+
+frameworks/base/core/java/android/os/Handler.java
+   sendMessage(Message msg)
+       sendMessageDelayed(msg, 0);
+            sendMessageAtTime(msg, SystemClock.uptimeMillis() + delayMillis);
+                 enqueueMessage(queue, msg, uptimeMillis);
+                    IF mAsynchronous THEN  msg.setAsynchronous(true); FI
+                    queue.enqueueMessage(msg, uptimeMillis);   //frameworks/base/core/java/android/os/MessageQueue.java
+                        
+  
+
+
+
+
+mTVPowerManagerShutdownDoneSync.notifyAll();
+
+
+    |----- com.android.server.power.ShutdownThread.run( )
+    |             |
+    |             |----- while (!mTVPowerManagerShutdownDone) {
+                  |          ...
+                  |          mTVPowerManagerShutdownDoneSync.wait(delay);
+                  |          ...
+                  |      }
+                  |
+                  |----- rebootOrShutdown(mReboot, mRebootReason)
+                              |
+                              |-----IF Reboot:   PowerManagerService.lowLevelReboot(reason);
+                              |-----ELSE:        PowerManagerService.lowLevelShutdown( );  
+
+
+
+com.android.server.power.PowerManagerService::shutdownOrRebootInternal (shutdown,...)
+       |----runnable = new Runnable ( )
+       |         |
+       |         |----run( ) //创建了Runnable对象后
+       |                |
+       |                |
+       |                |----synchronized(this)
+       |                         |
+       |                         |----IF shutdown is true:
+       |                         |       |
+       |                         |       |----com.android.server.power.ShutdownThread::shutdown (mContext, confirm)
+       |                         |                  |
+       |                         |                  |----shutdownInner (mContext, confirm)
+       |                         |
+       |                         |----ELSE , namely shutdown is false:
+       |                                 |
+       |                                 |----com.android.server.power.ShutdownThread::reboot (mContext, reason, confirm);
+       |                                            |
+       |                                            |----shutdownInner (context, confirm)
+       |
+       |  (注: PowerManagerService构造函数中创建的mHandler是当前线程的Handler,因为new ServiceThread返回的是当前线程Thread)
+       |----Message msg = Message.obtain(mHandler, runnable);  //获取Message对象,并在Message中绑定PowerManagerHandler和Runnable
+       |----msg.setAsynchronous(true);  //设置消息处理为异步处理,.
+       |----mHandler.sendMessage(msg);  //设置.
+
+
+
+
+
+
+
+
+    com.android.server.power.ShutdownThread::reboot ( final Context context, String reason, boolean confirm )
+       |
+       |----com.android.server.power.ShutdownThread::shutdownInner (context, confirm);
+
+
+
+
+
+
+
+
+com.android.server.wm.WindowManagerService::rebootSafeMode(boolean confirm)
+       |
+       |----com.android.server.power.ShutdownThread::rebootSaftMode (mContext, confirm)
+                 |
+                 |----com.android.server.power.ShutdownThread::shutdownInner (mContext, confirm);
+
+
+
+com.android.server.wm.WindowManagerService::shutdown(boolean confirm)
+       |
+       |----com.android.server.power.ShutdownThread::shutdown(mContext, confirm)
+                 |
+                 |----com.android.server.power.ShutdownThread::shutdownInner (mContext, confirm);
+
+
+
+
+
+
+  shutdownInner(final Context context, boolean confirm)
+       |
+       |----init( )
+       |      |
+       |      |----new org.droidtv.tv.server.TVSystemServerImpl
+       |
+       |----new ShutdownThread( )
+       |      |
+       |      |----mShutdownObserver = new ShutdownObserver();
+       |      |----mShutdownObserver.setParent(this); //Parent is ShutdownThread
+       |
+       |----RegisterTVPowerShutdownObserver( mShutdownObserver );
+       |      |
+       |      |----org.droidtv.tv.server.TVSystemServerImpl::RegisterTVPowerShutdownObserver( mShutdownObserver )
+       |                |
+       |                |----TvPowerManagerService::shutdown( mShutdownObserver )
+       |                          |
+       |                          |----mObserver = mShutdownObserver
+       |
+       |
+       |----checkShutdownAllowedInternal(context);
+              |
+              |----IPowerManager::goToSleep(...)
+              |
+              |----Invoke Java Class: org.droidtv.tv.server.TVSystemServerImpl::continueToFullShutdown( )
+              |         |
+              |         |----TvPowerManagerService::continueToFullShutdown( )
+              |                   |----Printf all the DontShutdownLock holders
+              |                   |----IF CurrentPowerState is FullSystemStart:
+              |                              |----PowerStates::sendEmptyMessage(MSG_SCREEN_OFF)
+              |----IF continueToFullShutdown Return true, namely TVPowerManager accepted full shutdown request
+                        |
+                        |----beginShutdownSequence(context)
+
+
+
+  beginShutdownSequence(Context context)
+      |
+      |----bGoDownNow is set to true if persist.sys.rebootreason is Recovery
+      |----bGoDownNow is set to true if persist.sys.virtualRequested is True
+      |----IF bGoDownNow is false
+      |         |
+      |         |----IF persist.sys.enableddr is True
+      |                    |
+      |                    |----ShutdownThread::mHandler.sendMessage(msg with MSG_DDR_SUSPEND)
+      |                    |----Return
+      |
+      |----ShutdownThread::run( )  //com.android.server.power.ShutdownThread
+      |           |
+                  |----- while (!mTVPowerManagerShutdownDone) {
+                  |          ...
+                  |          mTVPowerManagerShutdownDoneSync.wait(delay);
+                  |          ...
+                  |      }
+                  |
+                  |----- rebootOrShutdown(mReboot, mRebootReason)
+                              |
+                              |-----IF Reboot: PowerManagerService.lowLevelReboot(reason);
+                              |-----ELSE:      PowerManagerService.lowLevelShutdown( );                         
+
+
+
+
+
+
+
+
+
+
+
+  shutdown (final Context context, boolean confirm)
+      |
+      |---- 
+
+
+
+
+
+
+
+
+
+
+

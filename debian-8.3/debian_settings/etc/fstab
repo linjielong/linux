@@ -1,0 +1,26 @@
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+# / was on /dev/sda5 during installation
+UUID=1dc67848-ba54-4027-a012-1f342252c9b6 /               ext4    errors=remount-ro 0       1
+# /JLLim was on /dev/sda3 during installation
+UUID=d4414c72-5902-4f7b-939a-bdc72445b85b /JLLim          ext4    defaults        0       2
+# /home was on /dev/sda7 during installation
+UUID=87086bbd-8c70-45b9-9c62-9c34961e70d5 /home           ext4    defaults        0       2
+# swap was on /dev/sda6 during installation
+UUID=403c44b7-a8d8-4669-b63c-6546ec908016 none            swap    sw              0       0
+/dev/sr0        /media/cdrom0   udf,iso9660 user,noauto     0       0
+
+##################################################
+# JLLim.S20171116: Customize for DVD Apt Sources
+##################################################
+/JLLim/OSImages/Linux/isofiles/cdimage.debian.org/debian-cd/8.3.0/amd64/iso-dvd/debian-8.3.0-amd64-DVD-1.iso  /JLLim/aptsources/debian-8.3.0-amd64-DVD-1.iso iso9660  loop,defaults 0 2
+/JLLim/OSImages/Linux/isofiles/cdimage.debian.org/debian-cd/8.3.0/amd64/iso-dvd/debian-8.3.0-amd64-DVD-2.iso  /JLLim/aptsources/debian-8.3.0-amd64-DVD-2.iso iso9660  loop,defaults 0 2
+/JLLim/OSImages/Linux/isofiles/cdimage.debian.org/debian-cd/8.3.0/amd64/iso-dvd/debian-8.3.0-amd64-DVD-3.iso  /JLLim/aptsources/debian-8.3.0-amd64-DVD-3.iso iso9660  loop,defaults 0 2
+##################################################
+# JLLim.E20171116: Customize for DVD Apt Sources
+##################################################

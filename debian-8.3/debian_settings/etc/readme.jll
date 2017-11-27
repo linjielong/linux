@@ -1,0 +1,9 @@
+
+
+    Mount ntfs partition, but the partition is only read.
+
+    Solution to enable writable for the partition
+    # aptitude install fuse ntfs-3g ntfs-config    
+
+
+

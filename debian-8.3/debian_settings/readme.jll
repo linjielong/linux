@@ -1,0 +1,28 @@
+
+root login system :
+
+/etc/gdm3/daemon.conf
+/etc/pam.d/gdm-autologin
+/etc/pam.d/gdm-password
+
+
+
+
+
+Install Git Tools :
+
+    aptitude show git
+    aptitude install git
+    aptitude install git-svn
+    aptitude install git-doc
+    aptitude install git-email
+    aptitude install git-gui
+    aptitude install gitk 
+    aptitude install gitweb
+
+git clone git@code.csdn.net:x13015851932/jllutils.git
+
+
+
+
+

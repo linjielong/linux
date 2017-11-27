@@ -1,0 +1,164 @@
+
+
+1.Open Terminal
+
+2.Set Terminal included color, windows size, remove menu and so on.
+
+3.Switch current account to root
+
+4.Set apt source
+cp -rvf /etc/fstab /etc/fstab.orig
+cat >>/etc/fstab<<EOF
+
+##################################################
+# JLLim.S20171116: Customize for DVD Apt Sources
+##################################################
+/JLLim/OSImages/Linux/isofiles/cdimage.debian.org/debian-cd/8.3.0/amd64/iso-dvd/debian-8.3.0-amd64-DVD-1.iso  /JLLim/aptsources/debian-8.3.0-amd64-DVD-1.iso iso9660  loop,defaults 0 2
+/JLLim/OSImages/Linux/isofiles/cdimage.debian.org/debian-cd/8.3.0/amd64/iso-dvd/debian-8.3.0-amd64-DVD-2.iso  /JLLim/aptsources/debian-8.3.0-amd64-DVD-2.iso iso9660  loop,defaults 0 2
+/JLLim/OSImages/Linux/isofiles/cdimage.debian.org/debian-cd/8.3.0/amd64/iso-dvd/debian-8.3.0-amd64-DVD-3.iso  /JLLim/aptsources/debian-8.3.0-amd64-DVD-3.iso iso9660  loop,defaults 0 2
+##################################################
+# JLLim.E20171116: Customize for DVD Apt Sources
+##################################################
+
+EOF 
+
+cat >/etc/apt/sources.list.d/dvd.iso.list<<EOF
+
+### JLL.S20171120: Support For DVD Apt Sources ###
+deb file:/JLLim/aptsources/debian-8.3.0-amd64-DVD-1.iso  jessie contrib main
+deb file:/JLLim/aptsources/debian-8.3.0-amd64-DVD-2.iso  jessie contrib main
+deb file:/JLLim/aptsources/debian-8.3.0-amd64-DVD-3.iso  jessie contrib main
+### JLL.E20171120: Support For DVD Apt Sources ###
+
+EOF
+
+
+#Change  
+vi /etc/apt/sources.list
+#deb cdrom:[Debian GNU/Linux 8.3.0 _Jessie_ - Official amd64 DVD Binary-1 20160123-19:03]/ jessie contrib main
+
+#deb http://security.debian.org/ jessie/updates main contrib
+#deb-src http://security.debian.org/ jessie/updates main contrib
+
+
+
+5.Enable autocomplete @/etc/bash.bashrc
+# enable bash completion in interactive shells
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+
+
+6.Change root path to /home/root:
+   mv /root /home/
+   ln -sv  /home/root  /root
+ 
+
+Must reboot and then perform the follows:
+7.aptitude update
+
+8.aptitude install iceweasel
+
+9.aptitude install tree
+
+10.install git and git clone https://github.com/qq1624646454/jllutils.git
+
+
+
+11.enable root account to login system and ssh login with root
+
+root@JllServer:.# cp -rvf /etc/pam.d/gdm-password /etc/pam.d/gdm-password.orig
+root@JllServer:.# vim /etc/pam.d/gdm-password
+  1 #%PAM-1.0
+  2 auth    requisite       pam_nologin.so
+  3 #auth   required    pam_succeed_if.so user != root quiet_success
+  4 @include common-auth
+
+root@JllServer:.# cp -rvf /etc/gdm3/daemon.conf /etc/gdm3/daemon.conf.orig 
+root@JllServer:.# vim /etc/gdm3/daemon.conf
+ 14
+ 15 [security]
+ 16 AllowRoot = true
+ 17
+
+root@JllServer:.# cp -rvf /etc/ssh/sshd_config /etc/ssh/sshd_config.orig
+# Authentication:
+...
+PermitRootLogin yes #PermitRootLogin without-password
+...
+
+
+
+12.Install fcitx wubi input method
+
+aptitude install fcitx-frontend-all fcitx-ui-classic fcitx-table-wubi
+cp -rvf /etc/X11/xinit/xinputrc  /etc/X11/xinit/xinputrc.orig
+im-config #Select fcitx and the update for /etc/X11/xinit/xinputrc
+fcitx-configtool
+
+
+
+
+13.Install n2n vpn:
+
+
+root@debian:/JLLim/github.com/qq162464645/vpn_n2n/n2n/n2n_v1# make
+-su: make: command not found
+root@debian:/JLLim/github.com/qq162464645/vpn_n2n/n2n/n2n_v1# aptitude install make gcc
+
+
+n2n.h:46:18: fatal error: time.h: No such file or directory
+root@debian:/JLLim/github.com/qq162464645/vpn_n2n/n2n/n2n_v1# aptitude install libc-dev
+
+
+14.Install and Config samba:
+
+aptitude install samba
+smbpasswd -a YOUR_ACCOUNT_USERNAME
+vim /etc/samba/smb.conf
+  ...
+  [homes]
+      comment = Home Directories
+      browseable = yes
+      read only = no
+      create mask = 0700
+      directory mask = 0700
+      valid users = %S
+      veto files=/.*/  #Disable show all files started with .
+
+  [Linux]
+      comment = jllim for windows7
+      path = /root/Desktop
+      browseable = yes
+      read only = no
+      create mask = 0700
+      directory mask = 0700
+      valid users = root 
+      veto files = /.*/
+  ...
+
+service smbd restart
+
+Suggestion: install winbind for using hostname to replace ip 
+apt-get install winbind
+cp -rvf /etc/nsswitch.conf /etc/nsswitch.conf.orig
+vim /etc/nsswitch.conf
+  ...
+  hosts:   files mdns4_minimal [NOTFOUND=return] dns wins
+  ...
+
+
+
+
+15.Install bcompare
+
+#wget http://www.scootersoftware.com/bcompare-4.1.9.21719_amd64.deb
+cd software/
+sudo apt-get install gdebi-core
+sudo gdebi bcompare-4.1.9.21719_amd64.deb
+
