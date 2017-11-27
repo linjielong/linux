@@ -49,6 +49,9 @@ ${Fgreen}The ia32-libs should be installed for 64bit debian or ubuntu${AC}
 FOR 64bit debian:
   apt-get install lib32z1 lib32ncurses5
 
+${Fred}/opt/FriendlyARM/toolschain/4.4.3/libexec/gcc/arm-none-linux-gnueabi/4.4.3/cc1: error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+Makefile:439: recipe for target 'include/autoconf.mk' failed${AC}
+
 
 
 
