@@ -53,6 +53,24 @@ ${Fred}/opt/FriendlyARM/toolschain/4.4.3/libexec/gcc/arm-none-linux-gnueabi/4.4.
 Makefile:439: recipe for target 'include/autoconf.mk' failed${AC}
 aptitude install lib32stdc++6
 
+${Fred}/usr/bin/ld: vl.o: undefined reference to symbol 'timer_settime@@GLIBC_2.3.3'
+//lib/x86_64-linux-gnu/librt.so.1: error adding symbols: DSO missing from command line
+collect2: error: ld returned 1 exit status${AC}
+vim /home/root/Desktop/qemu_for_uboot_linux/run_qemu_mini2440/qemu_mini2440/mini2440/configure
+...
+1244 
+1245 ##########################################
+1246 # Do we need librt
+1247 CLOCKLIBS=""
+1248 cat > \$TMPC <<EOF
+1249 #include <signal.h>
+1250 #include <time.h>
+1251 ${Fyellow}//int main(void) { clockid_t id; return clock_gettime(id, NULL); }${AC}
+1252 ${Fyellow}int main(void) { struct itimerspec v; timer_t t; return timer_gettime (t, &v); } ${AC}
+1253 EOF
+1254 
+1255 rt=no
+
 
 
 EOF
