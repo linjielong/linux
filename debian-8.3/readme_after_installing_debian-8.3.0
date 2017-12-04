@@ -162,3 +162,6 @@ cd software/
 sudo apt-get install gdebi-core
 sudo gdebi bcompare-4.1.9.21719_amd64.deb
 
+
+16.Disable progmt
+echo " PS1='\${debian_chroot:+(\$debian_chroot)}\u@\h:.\$ ' " >> /etc/bash.bashrc
