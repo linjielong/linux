@@ -1,0 +1,31 @@
+
+
+mdm9607:
+
+
+@drivers/usb/serial/usb-serial.c
+usb_serial_init
+   result = usb_register(&usb_serial_driver);
+usb_serial_register_drivers
+   rc = usb_register(udriver)
+
+
+
+
+
+@drivers/media/usb/uvc/uvc_driver.c
+uvc_init
+   usb_register(&uvc_driver.driver)
+
+
+CONFIG_USB_VIDEO_CLASS
+CONFIG_MEDIA_CONTROLLER
+
+
+
+
+
+
+
+
+
